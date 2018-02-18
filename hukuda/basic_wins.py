@@ -34,8 +34,9 @@ def Num(win_rate_zisyo, test, train):
 		jokey_zisyo = np.append(jokey_zisyo, np.array([zisyo2]), axis=0)
 	for trainerElement in trainer2:
 		zisyo3 =  np.array([])
-		zisyo3 = np.append(zisyo3, jokey_zisyo)
-		zisyo3 = np.append(zisyo3, (len(np.where(trainer2==jokey_zisyo)[0])*1.0) / (len(win_rate_zisyo)*1.0))
+		zisyo3 = np.append(zisyo3, trainerElement)
+		zisyo3 = np.append(zisyo3, (len(np.where(trainer2==trainerElement)[0])*1.0) / (len(win_rate_zisyo)*1.0))
+		print(trainer_zisyo)
 		trainer_zisyo = np.append(trainer_zisyo, np.array([zisyo3]), axis=0)
 	#各要素(馬の勝率、騎手の勝率、調教師の勝率を正規化)
 	nrHorse_zisyo = normalize(horse_zisyo)
@@ -46,27 +47,27 @@ def Num(win_rate_zisyo, test, train):
 	for result in train:
 		wkTrainResult =np.empty((0,2), float)
 		wkTrainResult = np.append(wkTrainResult, result[0])
-		horse_zisyo_train = list(np.where(horse_zisyo[:,0]==result[1]))
-		jockey_zisyo_train = list(np.where(jockey_zisyo[:,0]==result[2]))
-		trainer_train = list(np.where(trainer_zisyo[:,0]==result[3]))
+		horse_zisyo_train = list(np.where(nrHorse_zisyo[:,0]==result[1]))
+		jockey_zisyo_train = list(np.where(nrJokey_zisyo[:,0]==result[2]))
+		trainer_train = list(np.where(nrTrainer_zisyo[:,0]==result[3]))
 			
 		if len(list(horse_zisyo_train[0])) == 0:
 			result[1] = 0.0
 		else:
 			for io in list(horse_zisyo_train[0]):
-				result[1] = horse_zisyo[int(io)][1]
+				result[1] = nrHorse_zisyo[int(io)][1]
 			
 		if len(list(jockey_zisyo_train[0])) == 0:
 			result[2] = 0.0
 		else:
 			for ip in list(jockey_zisyo_train[0]):
-				result[2] = jockey_zisyo[int(ip)][1]
+				result[2] = nrJokey_zisyo[int(ip)][1]
 
 		if len(list(trainer_train[0])) == 0:
 			result[3] = 0.0
 		else:
 			for iq in list(trainer_train[0]):
-				result[3] = trainer[int(iq)][1]
+				result[3] = nrTrainer_zisyo[int(iq)][1]
 		wkTrainResult = np.append(wkTrainResult, result[1]+result[2]+result[3])
 		train_result = np.append(train_result, np.array([wkTrainResult]), axis = 0)
 	return train_result
@@ -75,8 +76,6 @@ def normalize(targetArray):
 	for targetElement in targetArray:
 		targetElement[1] =max(targetArray[:,1])
 	return targetArray
-
-
 
 """
 
