@@ -6,17 +6,13 @@ from sklearn.metrics import classification_report
 import pandas as pd
 import numpy as np
 import csv
-import MySQLdb
-import MySQLdb.cursors
-import sql_horse_name
-from sshtunnel import SSHTunnelForwarder
 from time import sleep
 from basic_wins import Num
-#from basic_wins import createWinsRate
-#from basic_wins import raceBasicWinrate
 from basic_wins import normalize
-from horce_name import sql_horce_name
-import SQLCollection
+import os, sys
+path = os.path.join(os.path.dirname(__file__), '../')
+sys.path.append(path)
+import common.SQLCollection as SQLC
 
 #SVMによる予測順位
 def Svm(training, test):
@@ -27,13 +23,10 @@ def Svm(training, test):
 				  #{'kearnel':('rbf'), 'C':np.logspace(-4, 4, 9)} ]
 	#clf = GridSearchCV(svm.SVC(), parameters)
 	
+	#clfを学習、テストデータに適応
 	clf = svm.SVC(gamma=10000000000.0, C=10.)
-
 	clf.fit(training, tar2)
-	
-	print(clf)
 	return np.array(clf.predict(test))
-	#print(clf.best_estimator_)
 
 def Aska_method(sumResult):
 	raceResult = np.empty((0,3), float)
@@ -54,22 +47,11 @@ def Aska_method(sumResult):
 	return finResult
 #SVMに使うデータを正規化する
 def svm_make_training(test, training):
+	#各要素の最大値を計算する
+	maxHorceYear = maxValue(test,training,0,1)
+	maxHorceWeight = maxValue(test,training,1,2)
+	maxHorcePopularity = maxValue(test,training,2,3)
 	
-	if max(test[:,0]) >= max(training[:,1]):
-		maxHorceYear = max(test[:,0])
-	else:
-		maxHorceYear = max(training[:,1])
-
-	if max(test[:,1]) >= max(training[:,2]):
-		maxHorceWeight = max(test[:,1])
-	else:
-		maxHorceWeight = max(training[:,2])
-
-	if max(test[:,2]) >= max(training[:,3]):
-		maxHorcePopularity = max(test[:,2])
-	else:
-		maxHorcePopularity = max(training[:,3])
-
 	for predata in test:
 		predata[0] = (predata[0]) / (maxHorceYear)
 		predata[1] = (predata[1]) / (maxHorceWeight)
@@ -82,9 +64,16 @@ def svm_make_training(test, training):
 
 	return test, training
 
+def maxValue(test,training,keyTest, keyTraining):
+	if max(test[:,keyTest]) >= max(training[:,keyTraining]):
+		maxValue = max(test[:,keyTest])
+	else:
+		maxValue = max(training[:,keyTraining])
+	return maxValue
+
 if __name__ == "__main__":
 	
-	sqlhorse_jokey_zisyolection = SQLCollection.SQLCollection()
+	sqlhorse_jokey_zisyolection = SQLC.SQLCollection()
 	#学習用データセット作成
 	SVMTrainData = sqlhorse_jokey_zisyolection.getTrainData()
 		#if(SVMTrainData==-1):
@@ -100,12 +89,6 @@ if __name__ == "__main__":
 		#if( SVMTestData ==-1):
 		#return 0
 	try:
-		"""
-		SVMTrainData = cursor.fetchall()
-		selectWinRate = cursor.fetchall()
-		
-		SVMTestData = cursor.fetchall()
-		"""
 		horseNameID= np.array([])
 		url = np.array([])
 		
@@ -169,12 +152,7 @@ if __name__ == "__main__":
 
 	#馬、騎手、調教師が関係する勝率を計算する
 	finBasicWins = Num(win_rate_zisyo,basic_wins_test_in, basic_wins_train_in)
-	"""
-	#勝率辞書から必要な（馬・騎手・調教師）情報を抜き取る
-	testBasicWins, trainBasicWins = createWinsRate(basic_wins_in, basic_wins_train_in, hor, joc, tra)
-	#前項の抜きとった値から出場馬の勝率を計算
-	finBasicWins = raceBasicWinrate(trainBasicWins,arr3_copy)
-	"""
+
 	basicwins = dict(finBasicWins)
 	print("-----------------------")
 	print(basicwins)
