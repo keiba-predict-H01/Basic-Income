@@ -19,8 +19,8 @@ from horce_name import sql_horce_name
 import SQLCollection
 
 #SVMによる予測順位
-def Svm(arr, arr3):
-	target, training = np.hsplit(arr, [1])
+def Svm(training, test):
+	target, training = np.hsplit(training, [1])
 	tar2= np.ravel(target.T)
 	
 	#parameters = [{'kernel':['rbf'], 'C':np.logspace(1, 10, 10), 'gamma':np.logspace(10, 1000, 50)}]
@@ -32,9 +32,8 @@ def Svm(arr, arr3):
 	clf.fit(training, tar2)
 	
 	print(clf)
+	return np.array(clf.predict(test))
 	#print(clf.best_estimator_)
-
-	return np.array(clf.predict(arr3))
 
 def Aska_method(sumResult):
 	raceResult = np.empty((0,3), float)
@@ -50,7 +49,6 @@ def Aska_method(sumResult):
 		except:
 			result = np.append(result, 0.0)
 			print("errors")
-		print(len(result))
 		raceResult = np.append(raceResult, np.array([result]), axis = 0)
 
 	return finResult
@@ -89,7 +87,6 @@ if __name__ == "__main__":
 	sqlhorse_jokey_zisyolection = SQLCollection.SQLCollection()
 	#学習用データセット作成
 	SVMTrainData = sqlhorse_jokey_zisyolection.getTrainData()
-	print(SVMTrainData)
 		#if(SVMTrainData==-1):
 		#return 0
 	
@@ -100,7 +97,6 @@ if __name__ == "__main__":
 
 	#テスト用データセット作成
 	SVMTestData = sqlhorse_jokey_zisyolection.getTestData()
-	print(SVMTestData)
 		#if( SVMTestData ==-1):
 		#return 0
 	try:
@@ -180,15 +176,13 @@ if __name__ == "__main__":
 	finBasicWins = raceBasicWinrate(trainBasicWins,arr3_copy)
 	"""
 	basicwins = dict(finBasicWins)
-	print(finBasicWins)
 	print("-----------------------")
 	print(basicwins)
 
 
 	#ここからSVMゾーン
-	svmResult = Svm(race_result,race_predata)
-
-	print(np.hstack((horseNameID.reshape(len(horseNameID),1),svmResult.reshape(len(svmResult),1))))
+	svmResult = Svm(svM_training,svM_test)
+	print(svmResult)
 	svmResult_seikei = np.hstack((horseNameID.reshape(len(horseNameID),1),svmResult.reshape(len(svmResult),1)))
 
 	#結果を出力
@@ -199,6 +193,7 @@ if __name__ == "__main__":
 	#福田メソッド
 	for i in sorted(list(svmResult_seikei),key=lambda i:i[1]):
 		umaResult = np.array([])
+		print(i)
 		try:
 			print(i[0])
 			print(basicwins[i[0]])
