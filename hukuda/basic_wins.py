@@ -11,6 +11,7 @@ from time import sleep
 #馬勝率・騎手勝率の計算(例は馬のみ、騎手も同様)
 
 def Num(win_rate_zisyo, test, train):
+	print(train)
 	#馬と騎手と調教師の勝率をそれぞれの配列に分け計算する。
 	#createWinsRate,raceBasicWinrate組み合わせ
 	horse, jokey, trainer = np.hsplit(win_rate_zisyo, [1,2])
@@ -46,7 +47,8 @@ def Num(win_rate_zisyo, test, train):
 	train_result = np.empty((0,2), float)
 	for result in train:
 		wkTrainResult =np.empty((0,2), float)
-		wkTrainResult = np.append(wkTrainResult, result[0])
+		
+		wkTrainResult = np.append(wkTrainResult, result[1])
 		horse_zisyo_train = list(np.where(nrHorse_zisyo[:,0]==result[1]))
 		jockey_zisyo_train = list(np.where(nrJokey_zisyo[:,0]==result[2]))
 		trainer_train = list(np.where(nrTrainer_zisyo[:,0]==result[3]))
