@@ -18,11 +18,11 @@ def Num(win_rate_zisyo, test, train):
 	horse2= np.ravel(horse.T)
 	jokey2= np.ravel(jokey.T)
 	trainer2 = np.ravel(trainer.T)
-	
+
 	horse_zisyo = np.empty((0,2), float)
 	jokey_zisyo = np.empty((0,2), float)
 	trainer_zisyo = np.empty((0,2),float)
-	
+	print(trainer_zisyo)
 	for horseElement in horse2:
 		zisyo =  np.array([])
 		zisyo = np.append(zisyo, horseElement)
@@ -47,18 +47,18 @@ def Num(win_rate_zisyo, test, train):
 	train_result = np.empty((0,2), float)
 	for result in train:
 		wkTrainResult =np.empty((0,2), float)
-		
+
 		wkTrainResult = np.append(wkTrainResult, result[1])
 		horse_zisyo_train = list(np.where(nrHorse_zisyo[:,0]==result[1]))
 		jockey_zisyo_train = list(np.where(nrJokey_zisyo[:,0]==result[2]))
 		trainer_train = list(np.where(nrTrainer_zisyo[:,0]==result[3]))
-			
+
 		if len(list(horse_zisyo_train[0])) == 0:
 			result[1] = 0.0
 		else:
 			for io in list(horse_zisyo_train[0]):
 				result[1] = nrHorse_zisyo[int(io)][1]
-			
+
 		if len(list(jockey_zisyo_train[0])) == 0:
 			result[2] = 0.0
 		else:
@@ -95,23 +95,23 @@ def createWinsRate(test, train, horse, jockey, trainer):
 			predata[3] = trainer[int(iq)][1]
 
 	for result in train:
-		
+
 		horse_train = list(np.where(horse[:,0]==result[1]))
 		jockey_train = list(np.where(jockey[:,0]==result[2]))
 		trainer_train = list(np.where(trainer[:,0]==result[3]))
-		
+
 		if len(list(horse_train[0])) == 0:
 			result[1] = 0.0
 		else:
 			for io in list(horse_train[0]):
 				result[1] = horse[int(io)][1]
-		
+
 		if len(list(jockey_train[0])) == 0:
 			result[2] = 0.0
 		else:
 			for ip in list(jockey_train[0]):
 				result[2] = jockey[int(ip)][1]
-		
+
 		if len(list(trainer_train[0])) == 0:
 			result[3] = 0.0
 		else:

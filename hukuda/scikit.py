@@ -13,16 +13,17 @@ import os, sys
 path = os.path.join(os.path.dirname(__file__), '../')
 sys.path.append(path)
 import common.SQLCollection as SQLC
+import MySQLdb
 
 #SVMによる予測順位
 def Svm(training, test):
 	target, training = np.hsplit(training, [1])
 	tar2= np.ravel(target.T)
-	
+
 	#parameters = [{'kernel':['rbf'], 'C':np.logspace(1, 10, 10), 'gamma':np.logspace(10, 1000, 50)}]
 				  #{'kearnel':('rbf'), 'C':np.logspace(-4, 4, 9)} ]
 	#clf = GridSearchCV(svm.SVC(), parameters)
-	
+
 	#clfを学習、テストデータに適応
 	clf = svm.SVC(gamma=10000000000.0, C=10.)
 	clf.fit(training, tar2)
@@ -51,7 +52,7 @@ def svm_make_training(test, training):
 	maxHorceYear = maxValue(test,training,0,1)
 	maxHorceWeight = maxValue(test,training,1,2)
 	maxHorcePopularity = maxValue(test,training,2,3)
-	
+
 	for predata in test:
 		predata[0] = (predata[0]) / (maxHorceYear)
 		predata[1] = (predata[1]) / (maxHorceWeight)
@@ -65,6 +66,10 @@ def svm_make_training(test, training):
 	return test, training
 
 def maxValue(test,training,keyTest, keyTraining):
+	#print(test)
+	#print(training)
+	#print(keyTest)
+	#print(keyTraining)
 	if max(test[:,keyTest]) >= max(training[:,keyTraining]):
 		maxValue = max(test[:,keyTest])
 	else:
@@ -72,13 +77,13 @@ def maxValue(test,training,keyTest, keyTraining):
 	return maxValue
 
 if __name__ == "__main__":
-	
+
 	sqlhorse_jokey_zisyolection = SQLC.SQLCollection()
 	#学習用データセット作成
 	SVMTrainData = sqlhorse_jokey_zisyolection.getTrainData()
 		#if(SVMTrainData==-1):
 		#return 0
-	
+
 	#上位3位の馬と騎手のデータ
 	Top3HorseAndJockeyData = sqlhorse_jokey_zisyolection.getTop3HorseAndJockey()
 		#if Top3HorseAndJockeyData ==-1:
@@ -91,10 +96,10 @@ if __name__ == "__main__":
 	try:
 		horseNameID= np.array([])
 		url = np.array([])
-		
+
 		race_predata = np.empty((0,3), float)
 		basic_wins_test_in = np.empty((0,4), float)
-		
+
 		#テストデータをSVM用とbasic_wins用に格納
 		for row3 in SVMTestData:
 			key_place = (row3[6])[4:6]
@@ -114,10 +119,10 @@ if __name__ == "__main__":
 
 		race_result  = np.empty((0,4), float)
 		basic_wins_train_in   = np.empty((0,4), float)
-		
+
 		#トレーニングデータをSVM用とbasic_wins用に格納
 		for row in SVMTrainData:
-			place = (row[9])[4:6]
+			place = str(row[9])[4:6]
 			if place == key_place:
 				svm_trainning = np.array([])
 				top3_horce_jokey_trainning = np.array([])
@@ -133,7 +138,6 @@ if __name__ == "__main__":
 				basic_wins_train_in = np.append(basic_wins_train_in, np.array([top3_horce_jokey_trainning]), axis=0)
 
 		win_rate_zisyo = np.empty((0,3), float)
-
 		#basic_wins用の辞書作成
 		for row2 in Top3HorseAndJockeyData:
 			horse_jokey_trainer_zisyo = np.array([])
@@ -147,7 +151,7 @@ if __name__ == "__main__":
 		StopSSHSession(server, connection)
 		connection.commit()
 		StopSSHSession(server, connection)
-
+	#print(race_result)
 	svM_test, svM_training = svm_make_training(race_predata, race_result)
 
 	#馬、騎手、調教師が関係する勝率を計算する
@@ -155,12 +159,12 @@ if __name__ == "__main__":
 
 	basicwins = dict(finBasicWins)
 	print("-----------------------")
-	print(basicwins)
+	#print(basicwins)
 
 
 	#ここからSVMゾーン
 	svmResult = Svm(svM_training,svM_test)
-	print(svmResult)
+	#print(svmResult)
 	svmResult_seikei = np.hstack((horseNameID.reshape(len(horseNameID),1),svmResult.reshape(len(svmResult),1)))
 
 	#結果を出力
@@ -171,10 +175,10 @@ if __name__ == "__main__":
 	#福田メソッド
 	for i in sorted(list(svmResult_seikei),key=lambda i:i[1]):
 		umaResult = np.array([])
-		print(i)
+		#print(i)
 		try:
-			print(i[0])
-			print(basicwins[i[0]])
+			#print(i[0])
+			#print(basicwins[i[0]])
 			umaResult = np.append(umaResult, i[0])
 			umaResult = np.append(umaResult, i[1])
 			umaResult = np.append(umaResult, basicwins[i[0]])
@@ -187,7 +191,7 @@ if __name__ == "__main__":
 			writer.writerow(str(i[0])+":"+str(i[1])+":"+str(0.0).replace(',', ''))
 		raceResult = np.append(raceResult, np.array([umaResult]), axis = 0)
 	print(raceResult)
-	
+
 	#あすかメソッド
 	"""
 	for i in Aska_method(sorted(list(svmResult_seikei),key=lambda i:i[1])):
