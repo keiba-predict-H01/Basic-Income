@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-import sys
+import os, sys
+path = os.path.join(os.path.dirname(__file__), '../')
+sys.path.append(path)
+import common.SQLCollection as SQLC
 import numpy as np
 import pandas as pd
 import matplotlib as plt
@@ -8,6 +11,7 @@ from sshtunnel import SSHTunnelForwarder
 from chainer import cuda,Variable,FunctionSet,optimizers
 import chainer.functions as F
 import dataMolding as M
+
 
 #セッション開始？、あすかのコード参照
 def StartSSHSession():
@@ -88,36 +92,33 @@ def selectTop3Horse(result,horseList,num=3):
 	return sortMat[0:num]
 
 if __name__ == "__main__":
-
 	#順位を知りたいレースのIDを指定
 	testUrl = '201705050412'
 
+	sql = SQLC.SQLCollection()
+	trainData = sql.getTrainData()
+
 	#訓練データ
-	sql = "SELECT tkd.horse_year,tkd.basis_weight FROM t_keiba_data_result AS tkd "
-	train = np.array(getDataFromDB(sql))
+	#sql = "SELECT tkd.horse_year,tkd.basis_weight FROM t_keiba_data_result AS tkd "
+	#train = np.array(getDataFromDB(sql))
 	#horse_data = transPdFrame(horse_data)
-
-	#教師データ
-	sql = "SELECT tkd.score FROM t_keiba_data_result AS tkd "
-	target = np.array(getDataFromDB(sql))
-
-	#馬名取得
-	sql = "SELECT * FROM m_horse"
-	horse_name = np.array(getDataFromDB(sql))
-	#print(horse_name)
+	trainData = sql.getTrainData() #リファクタリング後のコード
+	trainData = trainData[:,5::6]#チェック
 
 	#テストデータ
-	sql = "SELECT tkd.horse_year,tkd.basis_weight FROM t_keiba_predata AS tkd WHERE tkd.url = " + testUrl
+	#sql = "SELECT tkd.horse_year,tkd.basis_weight FROM t_keiba_predata AS tkd WHERE tkd.url = " + testUrl
 	#sql += "WHERE t_keiba_predata.key = hogehoge"
 	#sql += "WHERE t_keiba_info.date = '201704020211' "
 	#test_data = transPdFrame(getDataFromDB(sql))
-	test = np.array(getDataFromDB(sql))
-	print(test)
+	#test = np.array(getDataFromDB(sql))
+	#print(test)
+	testData = sql.getTestData(testUrl)
 
 	#テストデータの馬名
 	sql = "SELECT m_horse.horse_name FROM m_horse WHERE m_horse.horse_id IN ( SELECT tkd.horse_name_id FROM t_keiba_predata AS tkd WHERE tkd.url = " + testUrl + " )"
-	testHorseName = getDataFromDB(sql)
-	print(testHorseName)
+	#testHorseName = getDataFromDB(sql)
+	#print(testHorseName)
+	testHorseName = sql.getSqlData(sql)
 
 	#パラメタの正則化
 	train = M.normalization(pd.DataFrame(train),0)
@@ -139,11 +140,11 @@ if __name__ == "__main__":
 							l2=F.Linear(n_units, n_units),
 							l3=F.Linear(n_units, 1))
 	#最適化手法のセット
-	optimizer = optimizers.Adam()　#最適化手法の決定、AdamまたはSGD推奨
-	optimizer.setup(model)　#モデルのセットアップ
+	optimizer = optimizers.Adam() #最適化手法の決定、AdamまたはSGD推奨
+	optimizer.setup(model) #モデルのセットアップ
 
 	#学習
-	n_epoch = 50　#学習回数
+	n_epoch = 50 #学習回数
 	batchsize = 50 #１回の勾配計算にかけるデータ数
 
 	train_loss = []
@@ -183,7 +184,7 @@ if __name__ == "__main__":
 	resultMat = np.hstack((result,testHorseName))
 	print(resultMat)
 
-	#上位３位まで摘出※動作怪しいfrom1227から未修正ß
+	#上位３位まで摘出※動作怪しい1227から未修正
 	#resultMat = np.sort(resultMat,axis=0)
 	#print(resultMat)
 	#higer3Horse = resultMat[0:3,:]
