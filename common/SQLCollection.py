@@ -56,7 +56,39 @@ class SQLCollection:
 			self.stopSSHSession()
 			return -1
 
+
 	#1 ~ 3位までの馬id,ジョッキーid,調教師idを取得する。
+	def getTrainData2(self):
+		#学習用データセット作成
+		sql = "SELECT tkd.score, tkd.rank, tkd.horse_name_id, tkd.jockey_id,tkd.horse_sex, tkd.horse_year, tkd.basis_weight, tkd.trainer_id, tkd.popularity, tkd.url "
+		sql += "FROM t_keiba_data_result AS tkd "
+		sql +=	"LEFT JOIN m_horse as mh ON tkd.horse_name_id = mh.horse_id "
+		sql +=	"LEFT JOIN m_jockey as mj ON tkd.jockey_id = mj.jockey_id "
+		sql +=	"LEFT JOIN m_trainer as mk ON tkd.trainer_id = mk.trainer_id limit 100"
+
+		try:
+			self.cursor.execute(sql)
+			return self.cursor.fetchall()
+		except MySQLdb.Error as e:
+			self.stopSSHSession()
+			return -1
+
+	def getTrainTest(self):
+		#テストデータ作成
+		sql = "SELECT tkd.score, tkd.rank, tkd.horse_name_id, tkd.jockey_id,tkd.horse_sex, tkd.horse_year, tkd.basis_weight, tkd.trainer_id, tkd.popularity, tkd.url "
+		sql += "FROM t_keiba_data_result AS tkd "
+		sql +=	"LEFT JOIN m_horse as mh ON tkd.horse_name_id = mh.horse_id "
+		sql +=	"LEFT JOIN m_jockey as mj ON tkd.jockey_id = mj.jockey_id "
+		sql +=	"LEFT JOIN m_trainer as mk ON tkd.trainer_id = mk.trainer_id "
+		sql +=	"ORDER BY tkd.url DESC limit 10000"
+
+		try:
+			self.cursor.execute(sql)
+			return self.cursor.fetchall()
+		except MySQLdb.Error as e:
+			self.stopSSHSession()
+			return -1
+    
 	def getTop3HorseAndJockey(self):
 		#学習用データセット作成
 		sql = "SELECT tkd.horse_name_id, tkd.jockey_id, tkd.trainer_id "
